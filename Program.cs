@@ -11,6 +11,12 @@ builder.Services.AddScoped<MyAmazingDatabase>(_ => new MyAmazingDatabase(dataOpt
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<MyAmazingDatabase>();
+    db.CreateTable<MyAmazingEntity>(tableOptions: TableOptions.CreateIfNotExists);
+}
+
 app.MapGet("/", () => "Hello World!");
 
 app.Run();
