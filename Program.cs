@@ -3,20 +3,23 @@ using LinqToDB;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = "Data Source=./development.db";
+var connectionString = Environment.GetEnvironmentVariable("DB") ?? "Data Source=./development.db";
 var options = new DataOptions().UseSQLite(connectionString);
-var dataOptions = new DataOptions<MyAmazingDatabase>(options);
+var dataOptions = new DataOptions<MyDatabaseConnection>(options);
 
-builder.Services.AddScoped<MyAmazingDatabase>(_ => new MyAmazingDatabase(dataOptions));
+//New connection every http request
+builder.Services.AddScoped<MyDatabaseConnection>(_ => new MyDatabaseConnection(dataOptions));
+//New connection every constructor
+
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<MyAmazingDatabase>();
+    var db = scope.ServiceProvider.GetRequiredService<MyDatabaseConnection>();
     db.CreateTable<MyAmazingEntity>(tableOptions: TableOptions.CreateIfNotExists);
 }
 
-app.MapGet("/", () => "Hello World!");
+app.MapGet("/", (MyDatabaseConnection dbc) =>dbc.MyAmazingEntities().ToList());
 
 app.Run();
